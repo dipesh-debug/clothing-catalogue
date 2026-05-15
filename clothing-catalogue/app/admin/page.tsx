@@ -38,6 +38,12 @@ export default function AdminDashboard() {
     else setLeads((prev) => prev.filter((lead) => lead.id !== id));
   };
 
+  const toggleFulfillment = async (id: string, currentStatus: boolean) => {
+    const { error } = await supabase.from('leads').update({ is_fulfilled: !currentStatus }).eq('id', id);
+    if (error) alert(`Error updating lead: ${error.message}`);
+    else setLeads((prev) => prev.map((lead) => lead.id === id ? { ...lead, is_fulfilled: !currentStatus } : lead));
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { id, value } = e.target;
     setProductData((prev) => ({ ...prev, [id]: value }));
@@ -107,8 +113,80 @@ export default function AdminDashboard() {
     }
   };
 
+  // Derived Analytics Data
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  
+  let monthlyVolume = 0;
+  let activeInquiries = 0;
+  let fulfilledThisMonth = 0;
+  const categoryCounts: Record<string, number> = {};
+
+  leads.forEach((lead) => {
+    const isFulfilled = !!lead.is_fulfilled;
+    const leadDate = lead.created_at ? new Date(lead.created_at) : null;
+    const isThisMonth = leadDate && leadDate.getMonth() === currentMonth && leadDate.getFullYear() === currentYear;
+
+    if (!isFulfilled) {
+      activeInquiries++;
+    }
+
+    if (isThisMonth) {
+      if (!isFulfilled) {
+        monthlyVolume += Number(lead.quantity) || 0;
+      } else {
+        fulfilledThisMonth++;
+      }
+    }
+
+    // Count Categories
+    const categories = Array.isArray(lead.category) ? lead.category : (lead.category || '').split(',');
+    categories.forEach((cat: string) => {
+      const cleanCat = cat.trim();
+      if (cleanCat) {
+        categoryCounts[cleanCat] = (categoryCounts[cleanCat] || 0) + 1;
+      }
+    });
+  });
+
+  // Determine Top Category
+  let topCategory = '—';
+  let maxCount = 0;
+  for (const [cat, count] of Object.entries(categoryCounts)) {
+    if (count > maxCount) {
+      maxCount = count;
+      topCategory = cat;
+    }
+  }
+
   return (
     <div className="contact-wrapper" style={{ flexDirection: 'column', alignItems: 'center' }}>
+      
+      {/* Top Section: Analytics Overview */}
+      <div style={{ width: '100%', maxWidth: '1200px', marginBottom: '3rem' }}>
+        <h2 style={{ color: 'var(--bg-secondary)', marginBottom: '1.5rem', borderBottom: '2px solid var(--bg-secondary)', paddingBottom: '0.75rem' }}>
+          Analytics Overview
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+          <div style={{ backgroundColor: '#FFFFFF', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: '1px solid var(--bg-primary)' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '1px' }}>Monthly Demand (Units)</h3>
+            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--bg-secondary)' }}>{monthlyVolume.toLocaleString()}</div>
+          </div>
+          <div style={{ backgroundColor: '#FFFFFF', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: '1px solid var(--bg-primary)' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '1px' }}>Active Inquiries</h3>
+            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--bg-secondary)' }}>{activeInquiries}</div>
+          </div>
+          <div style={{ backgroundColor: '#FFFFFF', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: '1px solid var(--bg-primary)' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '1px' }}>Fulfilled This Month</h3>
+            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#16a34a' }}>{fulfilledThisMonth}</div>
+          </div>
+          <div style={{ backgroundColor: '#FFFFFF', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: '1px solid var(--bg-primary)' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '1px' }}>Top Category</h3>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--accent-color)' }}>{topCategory}</div>
+          </div>
+        </div>
+      </div>
+
       <div className="contact-container">
         
         {/* Left Column: Product Upload Form */}
@@ -199,6 +277,7 @@ export default function AdminDashboard() {
                 <th style={{ padding: '1.25rem 1rem' }}>Categories</th>
                 <th style={{ padding: '1.25rem 1rem' }}>Quantity</th>
                 <th style={{ padding: '1.25rem 1rem' }}>Requirements</th>
+                <th style={{ padding: '1.25rem 1rem' }}>Status</th>
                 <th style={{ padding: '1.25rem 1rem', textAlign: 'center' }}>Action</th>
               </tr>
             </thead>
@@ -217,13 +296,20 @@ export default function AdminDashboard() {
                   </td>
                   <td style={{ padding: '1rem', color: 'var(--accent-color)', fontWeight: 700 }}>{lead.quantity ? `${lead.quantity} Units` : '—'}</td>
                   <td style={{ padding: '1rem', fontSize: '0.9rem', color: '#4B5563', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.requirements || '—'}</td>
+                  <td style={{ padding: '1rem' }}>
+                    {lead.is_fulfilled ? (
+                      <span style={{ display: 'inline-block', backgroundColor: '#16a34a', color: '#FFFFFF', padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 600 }}>Fulfilled</span>
+                    ) : (
+                      <button onClick={() => toggleFulfillment(lead.id, !!lead.is_fulfilled)} style={{ backgroundColor: 'transparent', border: '1px solid var(--bg-secondary)', color: 'var(--bg-secondary)', padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>Mark as Fulfilled</button>
+                    )}
+                  </td>
                   <td style={{ padding: '1rem', textAlign: 'center' }}>
                     <button onClick={() => handleDeleteLead(lead.id)} style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 'bold' }} aria-label="Delete Lead">×</button>
                   </td>
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={7} style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>
+                  <td colSpan={8} style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>
                     No active leads found. Marketing inquiries will appear here automatically.
                   </td>
                 </tr>
