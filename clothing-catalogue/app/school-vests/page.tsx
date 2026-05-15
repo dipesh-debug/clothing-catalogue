@@ -1,10 +1,31 @@
-import ProductCard from '../../components/ProductCard';
+"use client";
 
-export const metadata = {
-  title: 'School Vests | Clothing Catalogue',
-};
+import { useState, useEffect } from 'react';
+import ProductCard from '../../components/ProductCard';
+import { supabase } from '../../lib/supabase';
 
 export default function SchoolVestsPage() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('category', 'school-vests');
+      
+      if (error) {
+        console.error('Error fetching products:', error);
+      } else {
+        setProducts(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchProducts();
+  }, []);
+
   return (
     <div className="main-content" style={{ display: 'block', padding: '3rem 1.5rem' }}>
       <div className="welcome-card" style={{ margin: '0 auto' }}>
@@ -14,29 +35,27 @@ export default function SchoolVestsPage() {
         </p>
       </div>
       
-      <div className="product-grid">
-        <ProductCard 
-          title="Standard V-Neck Vest"
-          imagePlaceholder="[ V-Neck Vest Image ]"
-          moq="100 Units"
-          fabric="Poly-Cotton Blend"
-          features="Durable, Easy-Care, Colorfast"
-        />
-        <ProductCard 
-          title="Winter Knit Uniform Vest"
-          imagePlaceholder="[ Knit Vest Image ]"
-          moq="200 Units"
-          fabric="100% Acrylic"
-          features="Warm, Soft, Pilling-Resistant"
-        />
-        <ProductCard 
-          title="Premium Poly-Blend Vest"
-          imagePlaceholder="[ Premium Vest Image ]"
-          moq="150 Units"
-          fabric="Premium Blended Wool"
-          features="High-Quality, Elegant, Standard Indian/Nepal Sizing"
-        />
-      </div>
+      {loading ? (
+        <p style={{ textAlign: 'center', color: 'var(--bg-secondary)', marginTop: '3rem', fontWeight: 'bold' }}>Loading Catalogue...</p>
+      ) : products.length === 0 ? (
+        <p style={{ textAlign: 'center', color: '#4B5563', marginTop: '3rem' }}>
+          Our School Vests collection is currently being updated. Please contact our Damak/Biratnagar office for immediate bulk inquiries.
+        </p>
+      ) : (
+        <div className="product-grid">
+          {products.map((product) => (
+            <ProductCard 
+              key={product.id}
+              title={product.title}
+              imageUrl={product.image_url}
+              moq={product.moq}
+              fabric={product.fabric}
+              features={product.features}
+              imagePlaceholder="[ Image Not Found ]"
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

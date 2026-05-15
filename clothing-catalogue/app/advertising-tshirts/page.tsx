@@ -1,10 +1,31 @@
-import ProductCard from '../../components/ProductCard';
+"use client";
 
-export const metadata = {
-  title: 'Advertising T-Shirts | Clothing Catalogue',
-};
+import { useState, useEffect } from 'react';
+import ProductCard from '../../components/ProductCard';
+import { supabase } from '../../lib/supabase';
 
 export default function AdvertisingTShirtsPage() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('category', 'advertising-tshirts');
+      
+      if (error) {
+        console.error('Error fetching products:', error);
+      } else {
+        setProducts(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchProducts();
+  }, []);
+
   return (
     <div className="main-content" style={{ display: 'block', padding: '3rem 1.5rem' }}>
       <div className="welcome-card" style={{ margin: '0 auto' }}>
@@ -14,29 +35,27 @@ export default function AdvertisingTShirtsPage() {
         </p>
       </div>
       
-      <div className="product-grid">
-        <ProductCard 
-          title="Full Sublimation Promo Tee"
-          imagePlaceholder="[ Promo Tee Image ]"
-          moq="500 Units"
-          fabric="Dry-Fit Micro-Polyester"
-          features="Vibrant Sublimation Printing, High-Volume Capacity, Quick-Dry"
-        />
-        <ProductCard 
-          title="Corporate Event Polo"
-          imagePlaceholder="[ Event Polo Image ]"
-          moq="100 Units"
-          fabric="Pique Cotton"
-          features="Professional Look, Custom Embroidery/Printing"
-        />
-        <ProductCard 
-          title="Bulk Campaign T-Shirt"
-          imagePlaceholder="[ Campaign T-Shirt Image ]"
-          moq="1000 Units"
-          fabric="Standard Spun Polyester"
-          features="Cost-Effective, Bulk Production, High-Visibility Sublimation"
-        />
-      </div>
+      {loading ? (
+        <p style={{ textAlign: 'center', color: 'var(--bg-secondary)', marginTop: '3rem', fontWeight: 'bold' }}>Loading Catalogue...</p>
+      ) : products.length === 0 ? (
+        <p style={{ textAlign: 'center', color: '#4B5563', marginTop: '3rem' }}>
+          Our Advertising T-Shirts collection is currently being updated. Please contact our Damak/Biratnagar office for immediate bulk inquiries.
+        </p>
+      ) : (
+        <div className="product-grid">
+          {products.map((product) => (
+            <ProductCard 
+              key={product.id}
+              title={product.title}
+              imageUrl={product.image_url}
+              moq={product.moq}
+              fabric={product.fabric}
+              features={product.features}
+              imagePlaceholder="[ Image Not Found ]"
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
