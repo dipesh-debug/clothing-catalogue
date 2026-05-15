@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import ProductCard from '../../components/ProductCard';
 
@@ -16,6 +16,27 @@ export default function AdminDashboard() {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [imageScale, setImageScale] = useState<number>(1);
+  const [leads, setLeads] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchLeads();
+  }, []);
+
+  const fetchLeads = async () => {
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) console.error('Error fetching leads:', error);
+    else setLeads(data || []);
+  };
+
+  const handleDeleteLead = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this lead?')) return;
+    const { error } = await supabase.from('leads').delete().eq('id', id);
+    if (error) alert(`Error deleting lead: ${error.message}`);
+    else setLeads((prev) => prev.filter((lead) => lead.id !== id));
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { id, value } = e.target;
@@ -87,7 +108,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="contact-wrapper">
+    <div className="contact-wrapper" style={{ flexDirection: 'column', alignItems: 'center' }}>
       <div className="contact-container">
         
         {/* Left Column: Product Upload Form */}
@@ -161,6 +182,55 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+      </div>
+
+      {/* Bottom Section: Recent Inquiries */}
+      <div style={{ width: '100%', maxWidth: '1200px', marginTop: '4rem' }}>
+        <h2 style={{ color: 'var(--bg-secondary)', marginBottom: '1.5rem', borderBottom: '2px solid var(--bg-secondary)', paddingBottom: '0.75rem' }}>
+          Recent Inquiries
+        </h2>
+        <div style={{ overflowX: 'auto', backgroundColor: '#FFFFFF', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.05)', borderTop: '4px solid var(--bg-secondary)' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+            <thead>
+              <tr style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--bg-secondary)', borderBottom: '2px solid rgba(30, 58, 138, 0.1)' }}>
+                <th style={{ padding: '1.25rem 1rem' }}>Date</th>
+                <th style={{ padding: '1.25rem 1rem' }}>Client Name</th>
+                <th style={{ padding: '1.25rem 1rem' }}>Company/School</th>
+                <th style={{ padding: '1.25rem 1rem' }}>Categories</th>
+                <th style={{ padding: '1.25rem 1rem' }}>Quantity</th>
+                <th style={{ padding: '1.25rem 1rem' }}>Requirements</th>
+                <th style={{ padding: '1.25rem 1rem', textAlign: 'center' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leads.length > 0 ? leads.map((lead) => (
+                <tr key={lead.id} style={{ borderBottom: '1px solid rgba(30, 58, 138, 0.1)' }}>
+                  <td style={{ padding: '1rem' }}>{new Date(lead.created_at).toLocaleDateString()}</td>
+                  <td style={{ padding: '1rem', fontWeight: 600 }}>{lead.fullName || '—'}</td>
+                  <td style={{ padding: '1rem' }}>{lead.company || '—'}</td>
+                  <td style={{ padding: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {(Array.isArray(lead.category) ? lead.category : (lead.category || '').split(',')).map((cat: string, i: number) => (
+                        cat.trim() && <span key={i} style={{ border: '1px solid var(--accent-color)', color: 'var(--bg-secondary)', padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600 }}>{cat.trim()}</span>
+                      ))}
+                    </div>
+                  </td>
+                  <td style={{ padding: '1rem', color: 'var(--accent-color)', fontWeight: 700 }}>{lead.quantity ? `${lead.quantity} Units` : '—'}</td>
+                  <td style={{ padding: '1rem', fontSize: '0.9rem', color: '#4B5563', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.requirements || '—'}</td>
+                  <td style={{ padding: '1rem', textAlign: 'center' }}>
+                    <button onClick={() => handleDeleteLead(lead.id)} style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 'bold' }} aria-label="Delete Lead">×</button>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={7} style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>
+                    No active leads found. Marketing inquiries will appear here automatically.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
