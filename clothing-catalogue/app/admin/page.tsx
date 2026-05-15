@@ -18,6 +18,14 @@ export default function AdminDashboard() {
   const [imageScale, setImageScale] = useState<number>(1);
   const [leads, setLeads] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
+  const [leadFormData, setLeadFormData] = useState({
+    fullName: '',
+    company: '',
+    category: [] as string[],
+    quantity: '',
+    requirements: ''
+  });
+  const [editingLeadId, setEditingLeadId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLeads();
@@ -67,6 +75,43 @@ export default function AdminDashboard() {
 
     fetchLeads();
     fetchLogs();
+  };
+
+  const handleLeadChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setLeadFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleLeadCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value, checked } = e.target;
+    setLeadFormData((prev) => {
+      if (checked) return { ...prev, category: [...prev.category, value] };
+      return { ...prev, category: prev.category.filter((c) => c !== value) };
+    });
+  };
+
+  const handleLeadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = { ...leadFormData, quantity: Number(leadFormData.quantity) };
+
+    if (editingLeadId) {
+      const { error } = await supabase.from('leads').update(payload).eq('id', editingLeadId);
+      if (error) return alert(`Error updating lead: ${error.message}`);
+    } else {
+      const { error } = await supabase.from('leads').insert([payload]);
+      if (error) return alert(`Error inserting lead: ${error.message}`);
+    }
+
+    setLeadFormData({ fullName: '', company: '', category: [], quantity: '', requirements: '' });
+    setEditingLeadId(null);
+    fetchLeads();
+  };
+
+  const handleEditLead = (lead: any) => {
+    setEditingLeadId(lead.id);
+    const parsedCategory = Array.isArray(lead.category) ? lead.category : (lead.category || '').split(',').map((c: string) => c.trim()).filter(Boolean);
+    setLeadFormData({ fullName: lead.fullName || '', company: lead.company || '', category: parsedCategory, quantity: lead.quantity ? String(lead.quantity) : '', requirements: lead.requirements || '' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -214,9 +259,60 @@ export default function AdminDashboard() {
 
       <div className="contact-container">
         
-        {/* Left Column: Product Upload Form */}
+        {/* Left Column: Manual Lead Entry / Edit Form */}
         <div>
-          <div className="contact-form-card" style={{ marginBottom: '3rem' }}>
+          <div className="contact-form-card" style={{ borderTop: editingLeadId ? '4px solid var(--accent-color)' : '4px solid var(--bg-secondary)', marginBottom: '3rem' }}>
+            <h2 style={{ color: editingLeadId ? 'var(--accent-color)' : 'var(--bg-secondary)', marginTop: 0, marginBottom: '1.5rem' }}>
+              {editingLeadId ? 'Edit Lead' : 'Manual Lead Entry'}
+            </h2>
+            <form onSubmit={handleLeadSubmit}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="fullName">Full Name</label>
+                <input type="text" id="fullName" className="form-control" placeholder="John Doe" required value={leadFormData.fullName} onChange={handleLeadChange} />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label" htmlFor="company">Company / School Name</label>
+                <input type="text" id="company" className="form-control" placeholder="Everest Academy" required value={leadFormData.company} onChange={handleLeadChange} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Product Categories</label>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                  {['Tracksuits', 'School Vests', 'Montessori', 'T-Shirts'].map((cat) => (
+                    <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+                      <input type="checkbox" name="category" value={cat} checked={leadFormData.category.includes(cat)} onChange={handleLeadCategoryChange} style={{ width: '1.1rem', height: '1.1rem' }} />
+                      <span>{cat}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="quantity">Estimated Quantity</label>
+                <input type="number" id="quantity" className="form-control" placeholder="e.g. 500" min="1" required value={leadFormData.quantity} onChange={handleLeadChange} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="requirements">Additional Requirements</label>
+                <textarea id="requirements" className="form-control" rows={3} placeholder="Tell us about specific fabrics, sizes, or printing needs..." value={leadFormData.requirements} onChange={handleLeadChange}></textarea>
+              </div>
+
+              <button type="submit" className="btn-primary btn-block">
+                {editingLeadId ? 'Update Lead' : 'Create Lead'}
+              </button>
+              {editingLeadId && (
+                <button type="button" onClick={() => { setEditingLeadId(null); setLeadFormData({ fullName: '', company: '', category: [], quantity: '', requirements: '' }); }} className="btn-secondary btn-block" style={{ marginTop: '1rem' }}>
+                  Cancel Edit
+                </button>
+              )}
+            </form>
+          </div>
+        </div>
+
+        {/* Right Column: Product Upload CMS & Live Preview */}
+        <div>
+          <div className="contact-form-card" style={{ marginBottom: '2rem' }}>
             <h2 style={{ color: 'var(--bg-secondary)', marginTop: 0, marginBottom: '1.5rem' }}>Upload New Product</h2>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -265,10 +361,7 @@ export default function AdminDashboard() {
               </button>
             </form>
           </div>
-        </div>
 
-        {/* Right Column: Live Preview */}
-        <div style={{ position: 'relative' }}>
           <div style={{ position: 'sticky', top: '100px' }}>
             <h3 style={{ margin: '0 0 1rem 0', color: 'var(--bg-secondary)', textAlign: 'center' }}>
               Live Card Preview
@@ -328,7 +421,8 @@ export default function AdminDashboard() {
                       <button onClick={() => toggleFulfillment(lead.id, !!lead.is_fulfilled)} style={{ backgroundColor: 'transparent', border: '1px solid var(--bg-secondary)', color: 'var(--bg-secondary)', padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>Mark as Fulfilled</button>
                     )}
                   </td>
-                  <td style={{ padding: '1rem', textAlign: 'center' }}>
+                  <td style={{ padding: '1rem', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    <button onClick={() => handleEditLead(lead)} style={{ background: 'transparent', border: 'none', color: 'var(--bg-secondary)', cursor: 'pointer', fontSize: '1.1rem', marginRight: '0.75rem' }} aria-label="Edit Lead">✏️</button>
                     <button onClick={() => handleDeleteLead(lead.id)} style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 'bold' }} aria-label="Delete Lead">×</button>
                   </td>
                 </tr>
