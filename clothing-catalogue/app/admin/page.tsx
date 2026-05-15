@@ -17,9 +17,11 @@ export default function AdminDashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [imageScale, setImageScale] = useState<number>(1);
   const [leads, setLeads] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
 
   useEffect(() => {
     fetchLeads();
+    fetchLogs();
   }, []);
 
   const fetchLeads = async () => {
@@ -31,6 +33,19 @@ export default function AdminDashboard() {
     else setLeads(data || []);
   };
 
+  const fetchLogs = async () => {
+    const { data, error } = await supabase
+      .from('lead_logs')
+      .select('*, leads(*)')
+      .order('created_at', { ascending: false })
+      .limit(10);
+    if (error) {
+      console.error('Error fetching logs:', error.message || error);
+    } else {
+      setLogs(data || []);
+    }
+  };
+
   const handleDeleteLead = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this lead?')) return;
     const { error } = await supabase.from('leads').delete().eq('id', id);
@@ -39,9 +54,19 @@ export default function AdminDashboard() {
   };
 
   const toggleFulfillment = async (id: string, currentStatus: boolean) => {
-    const { error } = await supabase.from('leads').update({ is_fulfilled: !currentStatus }).eq('id', id);
-    if (error) alert(`Error updating lead: ${error.message}`);
-    else setLeads((prev) => prev.map((lead) => lead.id === id ? { ...lead, is_fulfilled: !currentStatus } : lead));
+    const newStatus = !currentStatus;
+    const { error: updateError } = await supabase.from('leads').update({ is_fulfilled: newStatus }).eq('id', id);
+    if (updateError) {
+      alert(`Error updating lead: ${updateError.message}`);
+      return;
+    }
+
+    const actionType = newStatus ? 'FULFILLED' : 'REVERTED';
+    const { error: logError } = await supabase.from('lead_logs').insert([{ lead_id: id, action_type: actionType }]);
+    if (logError) console.error('Error inserting log:', logError);
+
+    fetchLeads();
+    fetchLogs();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -298,7 +323,7 @@ export default function AdminDashboard() {
                   <td style={{ padding: '1rem', fontSize: '0.9rem', color: '#4B5563', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.requirements || '—'}</td>
                   <td style={{ padding: '1rem' }}>
                     {lead.is_fulfilled ? (
-                      <span style={{ display: 'inline-block', backgroundColor: '#16a34a', color: '#FFFFFF', padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 600 }}>Fulfilled</span>
+                      <button onClick={() => toggleFulfillment(lead.id, !!lead.is_fulfilled)} style={{ backgroundColor: 'transparent', border: '1px solid #9CA3AF', color: 'var(--bg-secondary)', padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>Revert to Active</button>
                     ) : (
                       <button onClick={() => toggleFulfillment(lead.id, !!lead.is_fulfilled)} style={{ backgroundColor: 'transparent', border: '1px solid var(--bg-secondary)', color: 'var(--bg-secondary)', padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>Mark as Fulfilled</button>
                     )}
@@ -317,6 +342,22 @@ export default function AdminDashboard() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Bottom Section: System Audit Log */}
+      <div style={{ width: '100%', maxWidth: '1200px', marginTop: '3rem' }}>
+        <h3 style={{ color: '#6B7280', marginBottom: '1rem', fontSize: '1.1rem' }}>
+          System Audit Log
+        </h3>
+        <ul style={{ listStyleType: 'none', padding: 0, color: '#9CA3AF', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {logs.length > 0 ? logs.map((log) => (
+            <li key={log.id}>
+              <span style={{ fontFamily: 'monospace' }}>[{new Date(log.created_at).toLocaleString()}]</span>: <strong>{log.leads?.fullName || log.leads?.fullname || log.leads?.full_name || 'Unknown Client'}</strong> was marked as <strong style={{ color: log.action_type === 'FULFILLED' ? '#16a34a' : '#DC2626' }}>{log.action_type}</strong>
+            </li>
+          )) : (
+            <li>No audit logs available.</li>
+          )}
+        </ul>
       </div>
     </div>
   );
