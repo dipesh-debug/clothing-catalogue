@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ProjectGallery from "../components/ProjectGallery";
 
 export const metadata = {
   title: 'Clothing Manufacturing Catalogue',
@@ -70,6 +71,20 @@ export default function Home() {
           <Link href="/contact" className="btn-primary" style={{ display: 'inline-block', fontSize: '1.25rem', padding: '1.25rem 3rem' }}>
             Start Your Bulk Order
           </Link>
+        </div>
+      </section>
+
+      {/* Featured Projects Section */}
+      <section style={{ backgroundColor: '#FFFFFF', padding: '5rem 1.5rem', textAlign: 'center' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <h2 style={{ color: 'var(--bg-secondary)', fontSize: 'clamp(2rem, 4vw, 2.75rem)', marginTop: 0, marginBottom: '1rem' }}>
+            Our Work in Action
+          </h2>
+          <p style={{ color: '#4B5563', fontSize: '1.1rem', maxWidth: '800px', margin: '0 auto 3rem auto', lineHeight: 1.6 }}>
+            Delivering high-performance apparel to schools and clubs across the region.
+          </p>
+          
+          <ProjectGallery />
         </div>
       </section>
     </main>

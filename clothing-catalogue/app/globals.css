@@ -507,3 +507,67 @@ body {
     background-color: rgba(30, 58, 138, 0.05);
   }
 }
+
+/* --- Project Gallery Styles --- */
+.gallery-filter {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+
+.filter-btn {
+  padding: 0.6rem 1.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid var(--bg-secondary);
+  background-color: #FFFFFF;
+  color: var(--bg-secondary);
+}
+
+.filter-btn.active {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: var(--text-light);
+}
+
+.gallery-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.gallery-item:hover .gallery-img {
+  transform: scale(1.05); /* Slight zoom on hover */
+}
+
+.gallery-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(30, 58, 138, 0.9); /* 90% opacity Professional Blue */
+  color: var(--text-light);
+  padding: 1.5rem;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  text-align: left;
+}
+
+.gallery-item:hover .gallery-overlay {
+  transform: translateY(0); /* Slides up from the bottom */
+}
