@@ -21,8 +21,10 @@ export default function AdminDashboard() {
   const [leadFormData, setLeadFormData] = useState({
     fullName: '',
     company: '',
+    phone: '',
+    address: '',
     category: [] as string[],
-    quantity: '',
+    quantities: {} as Record<string, string>,
     requirements: ''
   });
   const [editingLeadId, setEditingLeadId] = useState<string | null>(null);
@@ -87,13 +89,36 @@ export default function AdminDashboard() {
     const { value, checked } = e.target;
     setLeadFormData((prev) => {
       if (checked) return { ...prev, category: [...prev.category, value] };
-      return { ...prev, category: prev.category.filter((c) => c !== value) };
+      
+      const newQuantities = { ...prev.quantities };
+      delete newQuantities[value];
+      return { ...prev, category: prev.category.filter((c) => c !== value), quantities: newQuantities };
     });
+  };
+
+  const handleLeadQuantityChange = (cat: string, qty: string) => {
+    setLeadFormData((prev) => ({
+      ...prev,
+      quantities: { ...prev.quantities, [cat]: qty }
+    }));
   };
 
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...leadFormData, quantity: Number(leadFormData.quantity) };
+    
+    const items: Record<string, number> = {};
+    leadFormData.category.forEach((cat) => {
+      items[cat] = Number(leadFormData.quantities[cat]) || 0;
+    });
+
+    const payload = { 
+      fullName: leadFormData.fullName, 
+      company: leadFormData.company, 
+      phone: leadFormData.phone,
+      address: leadFormData.address,
+      items, 
+      requirements: leadFormData.requirements 
+    };
 
     if (editingLeadId) {
       const { error } = await supabase.from('leads').update(payload).eq('id', editingLeadId);
@@ -103,15 +128,24 @@ export default function AdminDashboard() {
       if (error) return alert(`Error inserting lead: ${error.message}`);
     }
 
-    setLeadFormData({ fullName: '', company: '', category: [], quantity: '', requirements: '' });
+    setLeadFormData({ fullName: '', company: '', phone: '', address: '', category: [], quantities: {}, requirements: '' });
     setEditingLeadId(null);
     fetchLeads();
   };
 
   const handleEditLead = (lead: any) => {
     setEditingLeadId(lead.id);
-    const parsedCategory = Array.isArray(lead.category) ? lead.category : (lead.category || '').split(',').map((c: string) => c.trim()).filter(Boolean);
-    setLeadFormData({ fullName: lead.fullName || '', company: lead.company || '', category: parsedCategory, quantity: lead.quantity ? String(lead.quantity) : '', requirements: lead.requirements || '' });
+    
+    let parsedCategory = lead.items ? Object.keys(lead.items) : Array.isArray(lead.category) ? lead.category : (lead.category || '').split(',').map((c: string) => c.trim()).filter(Boolean);
+    let parsedQuantities: Record<string, string> = {};
+    
+    if (lead.items) {
+      Object.entries(lead.items).forEach(([k, v]) => parsedQuantities[k] = String(v));
+    } else if (lead.quantity) {
+      parsedCategory.forEach((c: string) => parsedQuantities[c] = String(lead.quantity));
+    }
+
+    setLeadFormData({ fullName: lead.fullName || '', company: lead.company || '', phone: lead.phone || '', address: lead.address || '', category: parsedCategory, quantities: parsedQuantities, requirements: lead.requirements || '' });
     setActiveTab('leads');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -205,14 +239,18 @@ export default function AdminDashboard() {
 
     if (isThisMonth) {
       if (!isFulfilled) {
-        monthlyVolume += Number(lead.quantity) || 0;
+        if (lead.items) {
+          Object.values(lead.items).forEach((q: any) => monthlyVolume += Number(q) || 0);
+        } else {
+          monthlyVolume += Number(lead.quantity) || 0;
+        }
       } else {
         fulfilledThisMonth++;
       }
     }
 
     // Count Categories
-    const categories = Array.isArray(lead.category) ? lead.category : (lead.category || '').split(',');
+    const categories = lead.items ? Object.keys(lead.items) : Array.isArray(lead.category) ? lead.category : (lead.category || '').split(',');
     categories.forEach((cat: string) => {
       const cleanCat = cat.trim();
       if (cleanCat) {
@@ -381,21 +419,35 @@ export default function AdminDashboard() {
                     <input type="text" id="company" className="form-control" placeholder="Everest Academy" required value={leadFormData.company} onChange={handleLeadChange} />
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Product Categories</label>
-                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                      {['Tracksuits', 'School Vests', 'Montessori', 'T-Shirts'].map((cat) => (
-                        <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-                          <input type="checkbox" name="category" value={cat} checked={leadFormData.category.includes(cat)} onChange={handleLeadCategoryChange} style={{ width: '1.1rem', height: '1.1rem' }} />
-                          <span>{cat}</span>
-                        </label>
-                      ))}
+                  <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label className="form-label" htmlFor="phone">Phone Number</label>
+                      <input type="tel" id="phone" className="form-control" placeholder="+977..." value={leadFormData.phone} onChange={handleLeadChange} />
+                    </div>
+                    <div>
+                      <label className="form-label" htmlFor="address">Address</label>
+                      <input type="text" id="address" className="form-control" placeholder="Damak, Jhapa" value={leadFormData.address} onChange={handleLeadChange} />
                     </div>
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label" htmlFor="quantity">Estimated Quantity</label>
-                    <input type="number" id="quantity" className="form-control" placeholder="e.g. 500" min="1" required value={leadFormData.quantity} onChange={handleLeadChange} />
+                    <label className="form-label">Itemized Order</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+                      {['Tracksuits', 'School Vests', 'Montessori', 'T-Shirts'].map((cat) => {
+                        const isChecked = leadFormData.category.includes(cat);
+                        return (
+                          <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', minWidth: '160px' }}>
+                              <input type="checkbox" name="category" value={cat} checked={isChecked} onChange={handleLeadCategoryChange} style={{ width: '1.1rem', height: '1.1rem' }} />
+                              <span style={{ fontWeight: 500, color: 'var(--text-dark)' }}>{cat}</span>
+                            </label>
+                            {isChecked && (
+                              <input type="number" className="form-control" placeholder={`Qty for ${cat}`} min="1" required value={leadFormData.quantities[cat] || ''} onChange={(e) => handleLeadQuantityChange(cat, e.target.value)} style={{ padding: '0.4rem 0.75rem', flex: 1 }} />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div className="form-group">
@@ -407,7 +459,7 @@ export default function AdminDashboard() {
                     {editingLeadId ? 'Update Lead' : 'Create Lead'}
                   </button>
                   {editingLeadId && (
-                    <button type="button" onClick={() => { setEditingLeadId(null); setLeadFormData({ fullName: '', company: '', category: [], quantity: '', requirements: '' }); }} className="btn-secondary btn-block" style={{ marginTop: '1rem' }}>
+                    <button type="button" onClick={() => { setEditingLeadId(null); setLeadFormData({ fullName: '', company: '', phone: '', address: '', category: [], quantities: {}, requirements: '' }); }} className="btn-secondary btn-block" style={{ marginTop: '1rem' }}>
                       Cancel Edit
                     </button>
                   )}
@@ -429,6 +481,8 @@ export default function AdminDashboard() {
                     <th style={{ padding: '1.25rem 1rem' }}>Date</th>
                     <th style={{ padding: '1.25rem 1rem' }}>Client Name</th>
                     <th style={{ padding: '1.25rem 1rem' }}>Company/School</th>
+                    <th style={{ padding: '1.25rem 1rem' }}>Phone</th>
+                    <th style={{ padding: '1.25rem 1rem' }}>Address</th>
                     <th style={{ padding: '1.25rem 1rem' }}>Categories</th>
                     <th style={{ padding: '1.25rem 1rem' }}>Quantity</th>
                     <th style={{ padding: '1.25rem 1rem' }}>Requirements</th>
@@ -442,14 +496,16 @@ export default function AdminDashboard() {
                       <td style={{ padding: '1rem' }}>{new Date(lead.created_at).toLocaleDateString()}</td>
                       <td style={{ padding: '1rem', fontWeight: 600 }}>{lead.fullName || '—'}</td>
                       <td style={{ padding: '1rem' }}>{lead.company || '—'}</td>
+                      <td style={{ padding: '1rem' }}>{lead.phone || '—'}</td>
+                      <td style={{ padding: '1rem' }}>{lead.address || '—'}</td>
                       <td style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          {(Array.isArray(lead.category) ? lead.category : (lead.category || '').split(',')).map((cat: string, i: number) => (
+                          {(lead.items ? Object.keys(lead.items) : Array.isArray(lead.category) ? lead.category : (lead.category || '').split(',')).map((cat: string, i: number) => (
                             cat.trim() && <span key={i} style={{ border: '1px solid var(--accent-color)', color: 'var(--bg-secondary)', padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600 }}>{cat.trim()}</span>
                           ))}
                         </div>
                       </td>
-                      <td style={{ padding: '1rem', color: 'var(--accent-color)', fontWeight: 700 }}>{lead.quantity ? `${lead.quantity} Units` : '—'}</td>
+                      <td style={{ padding: '1rem', color: 'var(--accent-color)', fontWeight: 700, minWidth: '150px' }}>{lead.items ? Object.entries(lead.items).map(([c, q]) => `${q} ${c}`).join(', ') : lead.quantity ? `${lead.quantity} Units` : '—'}</td>
                       <td style={{ padding: '1rem', fontSize: '0.9rem', color: '#4B5563', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lead.requirements || '—'}</td>
                       <td style={{ padding: '1rem' }}>
                         {lead.is_fulfilled ? (
@@ -465,7 +521,7 @@ export default function AdminDashboard() {
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={8} style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>
+                      <td colSpan={10} style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>
                         No active leads found. Marketing inquiries will appear here automatically.
                       </td>
                     </tr>
