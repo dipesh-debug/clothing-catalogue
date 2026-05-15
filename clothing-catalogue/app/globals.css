@@ -142,3 +142,72 @@ body {
 .dropdown-item:hover {
   color: var(--accent-color);
 }
+
+/* Hero Section Styles */
+.hero-section {
+  background-color: var(--bg-primary);
+  flex: 1; /* Take up remaining height under navbar */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 1.5rem;
+}
+
+.hero-title {
+  color: var(--bg-secondary);
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  max-width: 900px;
+}
+
+.hero-subtitle {
+  color: var(--bg-secondary);
+  font-size: clamp(1.1rem, 2.5vw, 1.25rem);
+  font-weight: 400;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  max-width: 800px;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap; /* Allows buttons to stack on very small mobile screens */
+  justify-content: center;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 1rem 2.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  color: var(--text-light);
+  border: 2px solid var(--accent-color);
+}
+
+.btn-primary:hover {
+  background-color: #b91c1c; /* Darker red */
+  border-color: #b91c1c;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--bg-secondary);
+  border: 2px solid var(--bg-secondary);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(30, 58, 138, 0.05); /* Very light blue tint on hover */
+}
