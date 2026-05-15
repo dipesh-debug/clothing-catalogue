@@ -1,12 +1,16 @@
+import Image from "next/image";
+
 export default function ProductCard({ title, imagePlaceholder, imageUrl, moq, fabric, features, imageScale = 1 }) {
   return (
     <div className="product-card">
-      <div className="product-image-placeholder" style={{ height: '250px', overflow: 'hidden', backgroundColor: '#F8FAFC' }}>
+      <div className="product-image-placeholder" style={{ height: '250px', overflow: 'hidden', backgroundColor: '#E5E7EB', position: 'relative' }}>
         {imageUrl ? (
-          <img 
+          <Image 
             src={imageUrl} 
             alt={title || 'Product Image'} 
-            style={{ width: '100%', height: '100%', objectFit: 'contain', transform: `scale(${imageScale})` }} 
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            style={{ objectFit: 'contain', transform: `scale(${imageScale})` }} 
           />
         ) : (
           imagePlaceholder
