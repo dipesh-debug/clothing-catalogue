@@ -330,3 +330,87 @@ body {
   text-align: center;
   box-sizing: border-box;
 }
+
+/* Additional Nav Styles */
+.nav-link {
+  color: var(--text-light);
+  text-decoration: none;
+  font-size: 1.1rem;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  transition: color 0.2s ease;
+}
+
+.nav-button:hover, .nav-link:hover {
+  color: var(--accent-color);
+}
+
+/* Contact Page Layout & Form Styles */
+.contact-wrapper {
+  padding: 4rem 1.5rem;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.contact-container {
+  max-width: 1200px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+}
+
+@media (min-width: 768px) {
+  .contact-container {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.contact-info h1 {
+  color: var(--bg-secondary);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.contact-info p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.contact-form-card {
+  background-color: #FFFFFF;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  border-top: 4px solid var(--bg-secondary);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  color: var(--bg-secondary);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(30, 58, 138, 0.3); /* Subtle Blue Border */
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--bg-secondary);
+}
