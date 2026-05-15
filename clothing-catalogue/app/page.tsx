@@ -1,29 +1,14 @@
 export const metadata = {
-  title: 'Clothing Manufacturing Catalogue',
-  description: 'Explore our high-quality clothing manufacturing catalogue. Discover premium materials, scalable production, and request a quote today.',
+  title: 'Advertising T-Shirts | Clothing Catalogue',
 };
 
-export default function Home() {
+export default function AdvertisingTShirtsPage() {
   return (
-    <div className="page-wrapper">
-      <header className="catalogue-header">
-        <h1>Manufacturing Catalogue</h1>
-      </header>
-      
-      <main className="main-content">
-        <section className="welcome-card">
-          <h2>Welcome to Our Catalogue</h2>
-          <p>
-            Discover our extensive range of ethically manufactured clothing. 
-            From premium raw materials to flawless finishing, we provide reliable 
-            and scalable manufacturing solutions tailored to bring your brand's 
-            unique vision to life.
-          </p>
-          <button className="btn-quote" aria-label="Request a manufacturing quote">
-            Get a Quote
-          </button>
-        </section>
-      </main>
+    <div className="main-content">
+      <div className="welcome-card">
+        <h2>Advertising T-Shirts</h2>
+        <p>High-visibility, bulk-manufactured promotional t-shirts perfect for your next marketing campaign.</p>
+      </div>
     </div>
   );
 }
