@@ -1,0 +1,89 @@
+:root {
+  /* 60-30-10 Color Theme Variables */
+  --bg-primary: #F0FFFF;       /* 60% Azure White - Main Background */
+  --bg-secondary: #1E3A8A;     /* 30% Professional Blue - Headers/Secondary */
+  --accent-color: #DC2626;     /* 10% Red - Buttons/Calls to Action */
+  
+  /* Additional text variables for readability */
+  --text-light: #FFFFFF;
+  --text-dark: #1F2937;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-dark);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Layout & Component Styles */
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.catalogue-header {
+  background-color: var(--bg-secondary);
+  color: var(--text-light);
+  padding: 2rem 1rem;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.catalogue-header h1 {
+  margin: 0;
+  /* Responsive typography: scales between 1.5rem and 2.5rem based on viewport width */
+  font-size: clamp(1.5rem, 5vw, 2.5rem); 
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.welcome-card {
+  background-color: #FFFFFF;
+  padding: 3rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  max-width: 800px;
+  text-align: center;
+  border-top: 4px solid var(--bg-secondary);
+}
+
+.welcome-card h2 {
+  color: var(--bg-secondary);
+  margin-top: 0;
+  font-size: 1.75rem;
+}
+
+.welcome-card p {
+  line-height: 1.6;
+  font-size: 1.1rem;
+  margin-bottom: 2.5rem;
+}
+
+.btn-quote {
+  background-color: var(--accent-color);
+  color: var(--text-light);
+  border: none;
+  padding: 1rem 2.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-quote:hover {
+  background-color: #b91c1c; /* A slightly darker red for hover state */
+}
+
+.btn-quote:active {
+  transform: scale(0.98); /* Slight click depression effect */
+}
