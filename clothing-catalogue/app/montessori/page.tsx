@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ProductCard from '../../components/ProductCard';
 import { supabase } from '../../lib/supabase';
+import CategoryPills from '../../components/CategoryPills';
 
 export default function MontessoriPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -12,8 +13,7 @@ export default function MontessoriPage() {
     const fetchProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
-        .eq('category', 'montessori');
+        .select('*');
       
       if (error) {
         console.error('Error fetching products:', error);
@@ -34,6 +34,8 @@ export default function MontessoriPage() {
           Soft, playful, and easy-to-wash uniforms tailored specifically for the comfort of Montessori students.
         </p>
       </div>
+
+      <CategoryPills activeCategory="Montessori" />
       
       {loading ? (
         <p style={{ textAlign: 'center', color: 'var(--bg-secondary)', marginTop: '3rem', fontWeight: 'bold' }}>Loading Catalogue...</p>

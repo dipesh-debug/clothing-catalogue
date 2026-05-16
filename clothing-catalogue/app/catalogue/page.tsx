@@ -3,17 +3,26 @@
 import { useState, useEffect } from 'react';
 import ProductCard from '../../components/ProductCard';
 import { supabase } from '../../lib/supabase';
-import CategoryPills from '../../components/CategoryPills';
 
-export default function AdvertisingTShirtsPage() {
+const categories = [
+  { id: 'All', label: 'All' },
+  { id: 'tracksuits', label: 'Tracksuits' },
+  { id: 'school-vests', label: 'School Vests' },
+  { id: 'montessori', label: 'Montessori Uniforms' },
+  { id: 'advertising-tshirts', label: 'Advertising T-Shirts' }
+];
+
+export default function CataloguePage() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('All');
 
   useEffect(() => {
     const fetchProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching products:', error);
@@ -26,26 +35,41 @@ export default function AdvertisingTShirtsPage() {
     fetchProducts();
   }, []);
 
+  const filteredProducts = activeCategory === 'All' 
+    ? products 
+    : products.filter((p) => p.category === activeCategory);
+
   return (
     <div className="main-content" style={{ display: 'block', padding: '3rem 1.5rem' }}>
-      <div className="welcome-card" style={{ margin: '0 auto' }}>
-        <h2>Advertising T-Shirts</h2>
+      <div className="welcome-card" style={{ margin: '0 auto', marginBottom: '3rem' }}>
+        <h2>Full Catalogue</h2>
         <p>
-          High-visibility, bulk-manufactured promotional t-shirts perfect for your next marketing campaign.
+          Browse our complete range of premium manufactured garments. Use the filters below to find specific categories.
         </p>
       </div>
 
-      <CategoryPills activeCategory="T-Shirts" />
-      
+      {/* Filter Pills */}
+      <div className="gallery-filter">
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setActiveCategory(cat.id)}
+            className={`filter-btn ${activeCategory === cat.id ? 'active' : ''}`}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <p style={{ textAlign: 'center', color: 'var(--bg-secondary)', marginTop: '3rem', fontWeight: 'bold' }}>Loading Catalogue...</p>
-      ) : products.length === 0 ? (
+      ) : filteredProducts.length === 0 ? (
         <p style={{ textAlign: 'center', color: '#4B5563', marginTop: '3rem' }}>
-          Our Advertising T-Shirts collection is currently being updated. Please contact our Damak/Biratnagar office for immediate bulk inquiries.
+          No products found in this category. Please check back later or contact us for inquiries.
         </p>
       ) : (
         <div className="product-grid">
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <ProductCard 
               key={product.id}
               title={product.title}

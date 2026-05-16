@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ProductCard from '../../components/ProductCard';
 import { supabase } from '../../lib/supabase';
+import CategoryPills from '../../components/CategoryPills';
 
 export default function SchoolVestsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -12,8 +13,7 @@ export default function SchoolVestsPage() {
     const fetchProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
-        .eq('category', 'school-vests');
+        .select('*');
       
       if (error) {
         console.error('Error fetching products:', error);
@@ -34,6 +34,8 @@ export default function SchoolVestsPage() {
           Explore our durable and comfortable school vests, designed perfectly for everyday student wear.
         </p>
       </div>
+
+      <CategoryPills activeCategory="School Uniforms" />
       
       {loading ? (
         <p style={{ textAlign: 'center', color: 'var(--bg-secondary)', marginTop: '3rem', fontWeight: 'bold' }}>Loading Catalogue...</p>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ProductCard from '../../components/ProductCard';
 import { supabase } from '../../lib/supabase';
+import CategoryPills from '../../components/CategoryPills';
 
 export default function TracksuitsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -12,8 +13,7 @@ export default function TracksuitsPage() {
     const fetchProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
-        .eq('category', 'tracksuits');
+        .select('*');
       
       if (error) {
         console.error('Error fetching products:', error);
@@ -34,6 +34,8 @@ export default function TracksuitsPage() {
           With a manufacturing capacity of 1 lakh garments per year out of Biratnagar and Damak, we ensure reliable, large-scale production. Our tracksuits adhere to standard Indian/Nepal sizes and feature premium sublimation printing for vibrant, long-lasting designs.
         </p>
       </div>
+
+      <CategoryPills activeCategory="Tracksuits" />
       
       {loading ? (
         <p style={{ textAlign: 'center', color: 'var(--bg-secondary)', marginTop: '3rem', fontWeight: 'bold' }}>Loading Catalogue...</p>

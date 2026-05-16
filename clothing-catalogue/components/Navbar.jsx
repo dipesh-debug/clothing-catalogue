@@ -1,10 +1,55 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "../lib/supabase";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (searchQuery.trim().length === 0) {
+        setSearchResults([]);
+        setShowResults(false);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, title, image_url')
+        .ilike('title', `%${searchQuery}%`)
+        .limit(5);
+
+      if (!error && data) {
+        setSearchResults(data);
+        setShowResults(true);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      fetchResults();
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowResults(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const closeMenu = () => setIsMobileMenuOpen(false);
 
@@ -32,6 +77,76 @@ export default function Navbar() {
 
       {/* Right Desktop Menu */}
       <div className="desktop-menu" style={{ flex: 1, justifyContent: 'flex-end' }}>
+        <div className="nav-item" ref={searchRef} style={{ marginRight: '1rem', position: 'relative' }}>
+          <input 
+            type="text" 
+            placeholder="Search products..." 
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowResults(true);
+            }}
+            onFocus={() => {
+              if (searchQuery.trim().length > 0) setShowResults(true);
+            }}
+            style={{
+              backgroundColor: 'var(--bg-primary)',
+              border: '1px solid var(--bg-secondary)',
+              borderRadius: '999px',
+              padding: '0.4rem 1rem',
+              color: 'var(--text-dark)',
+              outline: 'none',
+              width: '220px',
+              fontSize: '0.9rem'
+            }}
+          />
+          {showResults && searchResults.length > 0 && (
+            <div style={{
+              position: 'absolute',
+              top: '120%',
+              right: 0,
+              width: '280px',
+              backgroundColor: '#fff',
+              border: '1px solid var(--bg-secondary)',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              overflow: 'hidden',
+              zIndex: 10
+            }}>
+              {searchResults.map(product => (
+                <div 
+                  key={product.id}
+                  onClick={() => {
+                    router.push(`/products/${product.id}`);
+                    setShowResults(false);
+                    setSearchQuery('');
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.5rem 0.75rem',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #E5E7EB',
+                    transition: 'background-color 0.2s ease',
+                    backgroundColor: 'transparent'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#EFF6FF'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  {product.image_url ? (
+                    <img src={product.image_url} alt={product.title} style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '4px' }} />
+                  ) : (
+                    <div style={{ width: '36px', height: '36px', backgroundColor: '#E5E7EB', borderRadius: '4px' }}></div>
+                  )}
+                  <span style={{ fontSize: '0.9rem', color: 'var(--bg-secondary)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {product.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="nav-item">
           <Link href="/about" className="nav-link">About Us</Link>
         </div>
