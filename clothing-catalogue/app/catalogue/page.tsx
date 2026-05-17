@@ -16,6 +16,9 @@ export default function CataloguePage() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [sizeOpen, setSizeOpen] = useState(true);
+  const [colorOpen, setColorOpen] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -39,36 +42,132 @@ export default function CataloguePage() {
     ? products 
     : products.filter((p) => p.category === activeCategory);
 
-  return (
-    <div className="main-content" style={{ display: 'block', padding: '3rem 1.5rem' }}>
-      <div className="welcome-card" style={{ margin: '0 auto', marginBottom: '3rem' }}>
-        <h2>Full Catalogue</h2>
-        <p>
-          Browse our complete range of premium manufactured garments. Use the filters below to find specific categories.
-        </p>
+  const FilterSidebar = () => (
+    <div className="filter-sidebar" style={{ backgroundColor: '#FFF' }}>
+      <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--bg-secondary)', marginBottom: '1.5rem', borderBottom: '2px solid #E5E7EB', paddingBottom: '0.75rem' }}>Filters</h2>
+      
+      {/* Category */}
+      <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '1.5rem' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '1rem' }}>Category</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {categories.map((cat) => (
+            <label key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <input type="radio" name="category" checked={activeCategory === cat.id} onChange={() => setActiveCategory(cat.id)} style={{ accentColor: 'var(--accent-color)' }} />
+              <span style={{ fontSize: '0.95rem', color: activeCategory === cat.id ? 'var(--accent-color)' : '#4B5563', fontWeight: activeCategory === cat.id ? 600 : 400 }}>{cat.label}</span>
+            </label>
+          ))}
+        </div>
       </div>
 
-      {/* Filter Pills */}
-      <div className="gallery-filter">
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setActiveCategory(cat.id)}
-            className={`filter-btn ${activeCategory === cat.id ? 'active' : ''}`}
-          >
-            {cat.label}
-          </button>
-        ))}
+      {/* Size Accordion */}
+      <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '1.5rem' }}>
+        <div onClick={() => setSizeOpen(!sizeOpen)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-dark)', margin: 0 }}>Size</h3>
+          <span style={{ fontSize: '1.25rem', fontWeight: 300, color: '#6B7280' }}>{sizeOpen ? '−' : '+'}</span>
+        </div>
+        {sizeOpen && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+            {['S', 'M', 'L', 'XL', 'XXL'].map(size => (
+              <label key={size} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input type="checkbox" style={{ accentColor: 'var(--accent-color)' }} />
+                <span style={{ fontSize: '0.95rem', color: '#4B5563' }}>{size}</span>
+              </label>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Color Accordion */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div onClick={() => setColorOpen(!colorOpen)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-dark)', margin: 0 }}>Color</h3>
+          <span style={{ fontSize: '1.25rem', fontWeight: 300, color: '#6B7280' }}>{colorOpen ? '−' : '+'}</span>
+        </div>
+        {colorOpen && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+            {[
+              { name: 'Black', count: 14 },
+              { name: 'Blue', count: 39 },
+              { name: 'Red', count: 8 },
+              { name: 'Navy', count: 22 }
+            ].map(color => (
+              <label key={color.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input type="checkbox" style={{ accentColor: 'var(--accent-color)' }} />
+                  <span style={{ fontSize: '0.95rem', color: '#4B5563' }}>{color.name}</span>
+                </div>
+                <span style={{ fontSize: '0.85rem', color: '#9CA3AF' }}>({color.count})</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ backgroundColor: '#FFFFFF', minHeight: '100vh' }}>
+      <style>{`
+        .catalogue-container { max-width: 1440px; margin: 0 auto; display: flex; gap: 3rem; padding: 3rem 1.5rem; }
+        .sidebar-col { flex: 0 0 250px; position: sticky; top: 100px; height: max-content; }
+        .grid-col { flex: 1; min-width: 0; }
+        .mobile-filter-btn { display: none; width: 100%; background-color: #FFFFFF; color: var(--bg-secondary); border: 1px solid var(--bg-secondary); padding: 0.75rem; font-weight: bold; text-align: center; border-radius: 4px; margin-bottom: 1.5rem; cursor: pointer; }
+        .mobile-drawer-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; }
+        .mobile-drawer { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: #FFF; z-index: 2001; transition: left 0.3s ease; padding: 1.5rem; overflow-y: auto; box-shadow: 2px 0 8px rgba(0,0,0,0.1); }
+        .mobile-drawer.open { left: 0; }
+        
+        @media (max-width: 900px) {
+          .sidebar-col { display: none; }
+          .mobile-filter-btn { display: block; }
+          .mobile-drawer-overlay.open { display: block; }
+        }
+      `}</style>
+
+      <div className="catalogue-container">
+        {/* Desktop Sidebar */}
+        <aside className="sidebar-col">
+          <FilterSidebar />
+        </aside>
+
+        {/* Mobile Drawer */}
+        <div className={`mobile-drawer-overlay ${isMobileFilterOpen ? 'open' : ''}`} onClick={() => setIsMobileFilterOpen(false)}></div>
+        <div className={`mobile-drawer ${isMobileFilterOpen ? 'open' : ''}`}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--bg-secondary)' }}>Filters</h2>
+            <button onClick={() => setIsMobileFilterOpen(false)} style={{ background: 'transparent', border: 'none', fontSize: '1.75rem', cursor: 'pointer', color: '#6B7280' }}>&times;</button>
+          </div>
+          <FilterSidebar />
+        </div>
+
+        {/* Right Product Grid Area */}
+        <main className="grid-col">
+          <button className="mobile-filter-btn" onClick={() => setIsMobileFilterOpen(true)}>
+            Filter & Sort Products
+          </button>
+
+          {/* Top Sorting Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid #E5E7EB', flexWrap: 'wrap', gap: '1rem' }}>
+            <span style={{ fontSize: '1.05rem', color: '#4B5563', fontWeight: 500 }}>
+              <strong style={{ color: 'var(--text-dark)' }}>{filteredProducts.length}</strong> products found
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <label htmlFor="sort" style={{ fontSize: '0.95rem', color: '#4B5563' }}>Sort by:</label>
+              <select id="sort" style={{ padding: '0.5rem 2rem 0.5rem 1rem', border: '1px solid #D1D5DB', borderRadius: '4px', backgroundColor: '#FFF', fontSize: '0.95rem', color: 'var(--text-dark)', cursor: 'pointer', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%236B7280\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1rem' }}>
+                <option>Newest Arrivals</option>
+                <option>Price: Low to High</option>
+                <option>Price: High to Low</option>
+              </select>
+            </div>
+          </div>
 
       {loading ? (
-        <p style={{ textAlign: 'center', color: 'var(--bg-secondary)', marginTop: '3rem', fontWeight: 'bold' }}>Loading Catalogue...</p>
+            <div style={{ padding: '4rem 0', textAlign: 'center', color: 'var(--bg-secondary)', fontWeight: 'bold' }}>Loading Catalogue...</div>
       ) : filteredProducts.length === 0 ? (
-        <p style={{ textAlign: 'center', color: '#4B5563', marginTop: '3rem' }}>
+            <div style={{ padding: '4rem 0', textAlign: 'center', color: '#4B5563' }}>
           No products found in this category. Please check back later or contact us for inquiries.
-        </p>
+            </div>
       ) : (
-        <div className="product-grid">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '2rem' }}>
           {filteredProducts.map((product) => (
             <ProductCard 
               key={product.id}
@@ -82,6 +181,8 @@ export default function CataloguePage() {
           ))}
         </div>
       )}
+        </main>
+      </div>
     </div>
   );
 }
