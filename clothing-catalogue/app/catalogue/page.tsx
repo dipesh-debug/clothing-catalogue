@@ -179,9 +179,9 @@ export default function CataloguePage() {
           {sortedProducts.map((product) => (
             <ProductCard 
               key={product.id}
+              id={product.id}
               title={product.title}
               imageUrl={product.image_url}
-              moq={product.moq}
               fabric={product.fabric}
               features={product.features}
               imagePlaceholder="[ Image Not Found ]"

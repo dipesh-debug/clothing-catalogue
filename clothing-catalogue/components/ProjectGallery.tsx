@@ -5,7 +5,13 @@ import Link from 'next/link';
 import ProductCard from './ProductCard';
 import { supabase } from '@/lib/supabase';
 
-const categories = ['All', 'Jerseys', 'Tracksuits', 'School Uniforms'];
+const categories = [
+  { id: 'All', label: 'All' },
+  { id: 'tracksuits', label: 'Tracksuits' },
+  { id: 'school-vests', label: 'School Vests' },
+  { id: 'montessori', label: 'Montessori' },
+  { id: 'advertising-tshirts', label: 'T-Shirts' }
+];
 
 export default function ProjectGallery() {
   const [activeCategory, setActiveCategory] = useState('All');
@@ -49,11 +55,11 @@ export default function ProjectGallery() {
       <div className="gallery-filter">
         {categories.map((cat) => (
           <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`filter-btn ${activeCategory === cat ? 'active' : ''}`}
+            key={cat.id}
+            onClick={() => setActiveCategory(cat.id)}
+            className={`filter-btn ${activeCategory === cat.id ? 'active' : ''}`}
           >
-            {cat}
+            {cat.label}
           </button>
         ))}
       </div>
@@ -70,9 +76,9 @@ export default function ProjectGallery() {
           {filteredProjects.map((project) => (
             <ProductCard 
               key={project.id}
+              id={project.id}
               title={project.title}
               imageUrl={project.image_url}
-              moq={project.moq}
               fabric={project.fabric}
               features={project.features}
               imagePlaceholder="[ Image Not Found ]"

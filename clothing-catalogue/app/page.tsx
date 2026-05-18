@@ -10,12 +10,12 @@ export default function Home() {
   return (
     <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <section className="hero-section">
-        <h1 className="hero-title">Your Trusted Partner in Garment Manufacturing</h1>
+        <h1 className="hero-title">Your Trusted Partner in Garment Manufacturing Have Served More than 2500+ Clients</h1>
         <p className="hero-subtitle">
           Delivering premium Tracksuits, School Vests, Montessori Clothes, and Advertising T-Shirts. Proudly serving the Damak and Biratnagar regions with an annual production capacity of over 1 Lakh garments.
         </p>
         <div className="hero-buttons">
-          <Link href="/tracksuits" className="btn-primary">
+          <Link href="/catalogue" className="btn-primary">
             Explore Catalogue
           </Link>
           <Link href="/contact" className="btn-secondary">
