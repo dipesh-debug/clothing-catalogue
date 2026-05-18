@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import ProductCard from '../../components/ProductCard';
 import { supabase } from '../../lib/supabase';
-import CategoryPills from '../../components/CategoryPills';
+import Link from 'next/link';
 
 export default function MontessoriPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -13,7 +13,8 @@ export default function MontessoriPage() {
     const fetchProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*');
+        .select('*')
+        .eq('category', 'montessori');
       
       if (error) {
         console.error('Error fetching products:', error);
@@ -33,9 +34,31 @@ export default function MontessoriPage() {
         <p>
           Soft, playful, and easy-to-wash uniforms tailored specifically for the comfort of Montessori students.
         </p>
+        <div style={{ marginTop: '1.5rem' }}>
+          <style>{`
+            .btn-explore {
+              display: inline-block;
+              background-color: #FFFFFF;
+              border: 2px solid #1E3A8A;
+              color: #1E3A8A;
+              font-weight: bold;
+              font-size: 1rem;
+              padding: 0.75rem 2rem;
+              border-radius: 6px;
+              text-decoration: none;
+              transition: all 0.3s ease;
+            }
+            .btn-explore:hover {
+              background-color: #1E3A8A;
+              color: #FFFFFF;
+            }
+          `}</style>
+          <Link href="/catalogue" className="btn-explore">
+            Explore Full Catalogue &rarr;
+          </Link>
+        </div>
       </div>
 
-      <CategoryPills activeCategory="Montessori" />
       
       {loading ? (
         <p style={{ textAlign: 'center', color: 'var(--bg-secondary)', marginTop: '3rem', fontWeight: 'bold' }}>Loading Catalogue...</p>
