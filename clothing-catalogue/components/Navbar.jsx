@@ -218,13 +218,9 @@ export default function Navbar() {
       {/* Left Desktop Menu */}
       <div className="desktop-menu" style={{ flex: 1 }}>
         <div className="nav-item">
-          <Link href="/catalogue" className="nav-button" style={{ display: 'inline-block', textDecoration: 'none' }}>Catalogue ▾</Link>
-          <div className="dropdown-menu">
-            <Link href="/tracksuits" className="dropdown-item">Tracksuits</Link>
-            <Link href="/school-vests" className="dropdown-item">School Vests</Link>
-            <Link href="/montessori" className="dropdown-item">Montessori</Link>
-            <Link href="/advertising-tshirts" className="dropdown-item">Advertising T-Shirts</Link>
-          </div>
+          <Link href="/catalogue" className="nav-link">
+            Catalogue
+          </Link>
         </div>
       </div>
 
@@ -270,12 +266,7 @@ export default function Navbar() {
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
         <div className="mobile-menu">
-          <div className="mobile-group-title">Catalogue</div>
-          <Link href="/tracksuits" className="mobile-link mobile-link-sub" onClick={closeMenu}>Tracksuits</Link>
-          <Link href="/school-vests" className="mobile-link mobile-link-sub" onClick={closeMenu}>School Vests</Link>
-          <Link href="/montessori" className="mobile-link mobile-link-sub" onClick={closeMenu}>Montessori</Link>
-          <Link href="/advertising-tshirts" className="mobile-link mobile-link-sub" onClick={closeMenu}>Advertising T-Shirts</Link>
-          
+          <Link href="/catalogue" className="mobile-link mobile-link-main" onClick={closeMenu}>Catalogue</Link>
           <Link href="/about" className="mobile-link mobile-link-main" onClick={closeMenu}>About Us</Link>
           <Link href="/contact" className="mobile-link mobile-link-main" onClick={closeMenu}>Contact Us</Link>
         </div>

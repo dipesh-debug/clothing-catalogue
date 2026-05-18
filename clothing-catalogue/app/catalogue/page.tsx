@@ -44,14 +44,15 @@ export default function CataloguePage() {
     );
   };
 
+  const categoryFilteredProducts = products.filter(p => activeCategory === 'All' || p.category === activeCategory);
+
   const getColorCount = (color: string) => {
-    return products.filter((p) => p.color === color).length;
+    return categoryFilteredProducts.filter((p) => p.color === color).length;
   };
 
-  const filteredProducts = products.filter((p) => {
-    const categoryMatch = activeCategory === 'All' || p.category === activeCategory;
+  const filteredProducts = categoryFilteredProducts.filter((p) => {
     const colorMatch = selectedColors.length === 0 || selectedColors.includes(p.color);
-    return categoryMatch && colorMatch;
+    return colorMatch;
   });
 
   const FilterSidebar = () => (
