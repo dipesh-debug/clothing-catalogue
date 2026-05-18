@@ -18,6 +18,7 @@ export default function CataloguePage() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [colorOpen, setColorOpen] = useState(true);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -37,9 +38,21 @@ export default function CataloguePage() {
     fetchProducts();
   }, []);
 
-  const filteredProducts = activeCategory === 'All' 
-    ? products 
-    : products.filter((p) => p.category === activeCategory);
+  const handleColorToggle = (color: string) => {
+    setSelectedColors((prev) =>
+      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]
+    );
+  };
+
+  const getColorCount = (color: string) => {
+    return products.filter((p) => p.color === color).length;
+  };
+
+  const filteredProducts = products.filter((p) => {
+    const categoryMatch = activeCategory === 'All' || p.category === activeCategory;
+    const colorMatch = selectedColors.length === 0 || selectedColors.includes(p.color);
+    return categoryMatch && colorMatch;
+  });
 
   const FilterSidebar = () => (
     <div className="filter-sidebar" style={{ backgroundColor: '#FFF' }}>
@@ -66,18 +79,13 @@ export default function CataloguePage() {
         </div>
         {colorOpen && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-            {[
-              { name: 'Black', count: 14 },
-              { name: 'Blue', count: 39 },
-              { name: 'Red', count: 8 },
-              { name: 'Navy', count: 22 }
-            ].map(color => (
-              <label key={color.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+            {['Black', 'Blue', 'Red', 'Navy'].map(color => (
+              <label key={color} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input type="checkbox" style={{ accentColor: 'var(--accent-color)' }} />
-                  <span style={{ fontSize: '0.95rem', color: '#4B5563' }}>{color.name}</span>
+                  <input type="checkbox" checked={selectedColors.includes(color)} onChange={() => handleColorToggle(color)} style={{ accentColor: 'var(--accent-color)' }} />
+                  <span style={{ fontSize: '0.95rem', color: '#4B5563' }}>{color}</span>
                 </div>
-                <span style={{ fontSize: '0.85rem', color: '#9CA3AF' }}>({color.count})</span>
+                <span style={{ fontSize: '0.85rem', color: '#9CA3AF' }}>({getColorCount(color)})</span>
               </label>
             ))}
           </div>
