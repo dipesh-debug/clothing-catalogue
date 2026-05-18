@@ -1,43 +1,33 @@
-"use client";
-
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '../../../lib/supabase';
+import { Metadata } from 'next';
 
-export default function ProductDetailsPage() {
-  const { id } = useParams();
-  const [product, setProduct] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const { data: product } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', params.id)
+    .single();
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!id) return;
-      
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching product:', error);
-      } else {
-        setProduct(data);
-      }
-      setLoading(false);
-    };
-
-    fetchProduct();
-  }, [id]);
-
-  if (loading) {
-    return (
-      <div className="main-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', backgroundColor: 'var(--bg-primary)' }}>
-        <h2 style={{ color: 'var(--bg-secondary)', fontWeight: 600 }}>Loading Premium Product Details...</h2>
-      </div>
-    );
+  if (!product) {
+    return { title: 'Product Not Found' };
   }
+
+  return {
+    title: product.title,
+    description: `Fabric: ${product.fabric || 'N/A'} | Features: ${product.features || 'N/A'}`,
+    openGraph: {
+      images: product.image_url ? [product.image_url] : [],
+    },
+  };
+}
+
+export default async function ProductDetailsPage({ params }: { params: { id: string } }) {
+  const { data: product } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', params.id)
+    .single();
 
   if (!product) {
     return (
@@ -49,7 +39,8 @@ export default function ProductDetailsPage() {
 
   // Prepare WhatsApp CTA Link
   const whatsappNumber = "9779800000000"; // Using the placeholder number from your Footer
-  const whatsappMessage = encodeURIComponent(`Hello, I am interested in a bulk order for ${product.title}. Can you provide pricing and fabric availability for this item?`);
+  const productUrl = `https://purbeligarments.com/products/${product.id}`;
+  const whatsappMessage = encodeURIComponent(`Hello, I am interested in a bulk order for ${product.title}. Can you provide pricing and fabric availability for this item?\n\nCheck out this product: ${productUrl}`);
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
   return (

@@ -9,7 +9,6 @@ export default function AdminDashboard() {
     title: '',
     category: 'tracksuits',
     color: 'Black',
-    moq: '',
     fabric: '',
     features: '',
     sort_tag: 'Newest Arrivals'
@@ -187,7 +186,6 @@ export default function AdminDashboard() {
       title: prod.title || '',
       category: prod.category || 'tracksuits',
       color: prod.color || 'Black',
-      moq: prod.moq || '',
       fabric: prod.fabric || '',
       features: prod.features || '',
       sort_tag: prod.sort_tag || 'Newest Arrivals'
@@ -236,7 +234,6 @@ export default function AdminDashboard() {
         title: productData.title,
         category: productData.category,
         color: productData.color,
-        moq: productData.moq,
         fabric: productData.fabric,
         features: productData.features,
         image_url: imageUrl,
@@ -254,7 +251,7 @@ export default function AdminDashboard() {
       }
 
       // Reset the form
-      setProductData({ title: '', category: 'tracksuits', color: 'Black', moq: '', fabric: '', features: '', sort_tag: 'Newest Arrivals' });
+      setProductData({ title: '', category: 'tracksuits', color: 'Black', fabric: '', features: '', sort_tag: 'Newest Arrivals' });
       setImageFile(null);
       setImagePreviewUrl('');
       setImageScale(1);
@@ -414,15 +411,9 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label className="form-label" htmlFor="moq">MOQ</label>
-                    <input type="text" id="moq" className="form-control" placeholder="e.g., 500 Sets" required value={productData.moq} onChange={handleChange} />
-                  </div>
-                  <div>
-                    <label className="form-label" htmlFor="fabric">Fabric</label>
-                    <input type="text" id="fabric" className="form-control" placeholder="e.g., 100% Polyester" required value={productData.fabric} onChange={handleChange} />
-                  </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="fabric">Fabric</label>
+                  <input type="text" id="fabric" className="form-control" placeholder="e.g., 100% Polyester" required value={productData.fabric} onChange={handleChange} />
                 </div>
 
                 <div className="form-group">
@@ -454,7 +445,7 @@ export default function AdminDashboard() {
                   {isUploading ? (editingProductId ? 'Updating...' : 'Uploading...') : (editingProductId ? 'Update Product Information' : 'Publish Product')}
                 </button>
                 {editingProductId && (
-                  <button type="button" onClick={() => { setEditingProductId(null); setProductData({ title: '', category: 'tracksuits', color: 'Black', moq: '', fabric: '', features: '', sort_tag: 'Newest Arrivals' }); setImagePreviewUrl(''); }} className="btn-secondary btn-block" style={{ marginTop: '1rem' }}>
+                  <button type="button" onClick={() => { setEditingProductId(null); setProductData({ title: '', category: 'tracksuits', color: 'Black', fabric: '', features: '', sort_tag: 'Newest Arrivals' }); setImagePreviewUrl(''); }} className="btn-secondary btn-block" style={{ marginTop: '1rem' }}>
                     Cancel Edit
                   </button>
                 )}
@@ -469,7 +460,6 @@ export default function AdminDashboard() {
                 </h3>
                 <ProductCard 
                   title={productData.title || 'Product Title'}
-                  moq={productData.moq || 'e.g., 500 Sets'}
                   fabric={productData.fabric || 'e.g., 100% Polyester'}
                   features={productData.features || 'e.g., Breathable, Custom Prints'}
                   imageUrl={imagePreviewUrl}
@@ -493,7 +483,6 @@ export default function AdminDashboard() {
                     <th style={{ padding: '1.25rem 1rem' }}>Title</th>
                     <th style={{ padding: '1.25rem 1rem' }}>Category</th>
                     <th style={{ padding: '1.25rem 1rem' }}>Color</th>
-                    <th style={{ padding: '1.25rem 1rem' }}>MOQ</th>
                     <th style={{ padding: '1.25rem 1rem', textAlign: 'center' }}>Action</th>
                   </tr>
                 </thead>
@@ -510,7 +499,6 @@ export default function AdminDashboard() {
                       <td style={{ padding: '1rem', fontWeight: 600 }}>{prod.title}</td>
                       <td style={{ padding: '1rem', textTransform: 'capitalize' }}>{prod.category}</td>
                       <td style={{ padding: '1rem' }}>{prod.color || '—'}</td>
-                      <td style={{ padding: '1rem' }}>{prod.moq}</td>
                       <td style={{ padding: '1rem', textAlign: 'center', whiteSpace: 'nowrap' }}>
                         <button onClick={() => handleEditProduct(prod)} style={{ background: 'transparent', border: 'none', color: 'var(--bg-secondary)', cursor: 'pointer', fontSize: '1.1rem', marginRight: '0.75rem' }} aria-label="Edit Product">✏️</button>
                         <button onClick={() => handleDeleteProduct(prod.id)} style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 'bold' }} aria-label="Delete Product">×</button>
@@ -518,7 +506,7 @@ export default function AdminDashboard() {
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>
+                      <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>
                         No products found. Add your first product above.
                       </td>
                     </tr>
