@@ -11,7 +11,8 @@ export default function AdminDashboard() {
     color: 'Black',
     moq: '',
     fabric: '',
-    features: ''
+    features: '',
+    sort_tag: 'Newest Arrivals'
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('');
@@ -164,8 +165,12 @@ export default function AdminDashboard() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { id, value } = e.target;
-    setProductData((prev) => ({ ...prev, [id]: value }));
+    const target = e.target as HTMLInputElement;
+    const { id, value, type } = target;
+    setProductData((prev) => ({ 
+      ...prev, 
+      [id]: type === 'checkbox' ? target.checked : (type === 'number' ? Number(value) : value) 
+    }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,7 +189,8 @@ export default function AdminDashboard() {
       color: prod.color || 'Black',
       moq: prod.moq || '',
       fabric: prod.fabric || '',
-      features: prod.features || ''
+      features: prod.features || '',
+      sort_tag: prod.sort_tag || 'Newest Arrivals'
     });
     setImagePreviewUrl(prod.image_url || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -233,7 +239,8 @@ export default function AdminDashboard() {
         moq: productData.moq,
         fabric: productData.fabric,
         features: productData.features,
-        image_url: imageUrl
+        image_url: imageUrl,
+        sort_tag: productData.sort_tag
       };
 
       if (editingProductId) {
@@ -247,7 +254,7 @@ export default function AdminDashboard() {
       }
 
       // Reset the form
-      setProductData({ title: '', category: 'tracksuits', color: 'Black', moq: '', fabric: '', features: '' });
+      setProductData({ title: '', category: 'tracksuits', color: 'Black', moq: '', fabric: '', features: '', sort_tag: 'Newest Arrivals' });
       setImageFile(null);
       setImagePreviewUrl('');
       setImageScale(1);
@@ -424,6 +431,16 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="form-group">
+                  <label className="form-label" htmlFor="sort_tag">Sort By Tag</label>
+                  <select id="sort_tag" className="form-control" required value={productData.sort_tag} onChange={handleChange}>
+                    <option>Newest Arrivals</option>
+                    <option>Featured</option>
+                    <option>Best Selling</option>
+                    <option>Popularity</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
                   <label className="form-label" htmlFor="image">Product Image</label>
                   <input type="file" id="image" accept="image/*" className="form-control" required={!editingProductId} onChange={handleImageChange} style={{ padding: '0.5rem' }} />
                 </div>
@@ -437,7 +454,7 @@ export default function AdminDashboard() {
                   {isUploading ? (editingProductId ? 'Updating...' : 'Uploading...') : (editingProductId ? 'Update Product Information' : 'Publish Product')}
                 </button>
                 {editingProductId && (
-                  <button type="button" onClick={() => { setEditingProductId(null); setProductData({ title: '', category: 'tracksuits', color: 'Black', moq: '', fabric: '', features: '' }); setImagePreviewUrl(''); }} className="btn-secondary btn-block" style={{ marginTop: '1rem' }}>
+                  <button type="button" onClick={() => { setEditingProductId(null); setProductData({ title: '', category: 'tracksuits', color: 'Black', moq: '', fabric: '', features: '', sort_tag: 'Newest Arrivals' }); setImagePreviewUrl(''); }} className="btn-secondary btn-block" style={{ marginTop: '1rem' }}>
                     Cancel Edit
                   </button>
                 )}

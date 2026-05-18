@@ -19,6 +19,7 @@ export default function CataloguePage() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [colorOpen, setColorOpen] = useState(true);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [sortOption, setSortOption] = useState('Newest Arrivals');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -50,9 +51,25 @@ export default function CataloguePage() {
     return categoryFilteredProducts.filter((p) => p.color === color).length;
   };
 
-  const filteredProducts = categoryFilteredProducts.filter((p) => {
+  const colorFilteredProducts = categoryFilteredProducts.filter((p) => {
     const colorMatch = selectedColors.length === 0 || selectedColors.includes(p.color);
     return colorMatch;
+  });
+
+  const sortedProducts = [...colorFilteredProducts].sort((a, b) => {
+    // For any sort option, bring products with a matching `sort_tag` to the top.
+    const aIsTagged = a.sort_tag === sortOption;
+    const bIsTagged = b.sort_tag === sortOption;
+
+    if (aIsTagged && !bIsTagged) {
+      return -1; // a comes first
+    }
+    if (!aIsTagged && bIsTagged) {
+      return 1; // b comes first
+    }
+
+    // If both are tagged or neither are, use creation date as a secondary sort
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
   const FilterSidebar = () => (
@@ -138,27 +155,28 @@ export default function CataloguePage() {
           {/* Top Sorting Bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid #E5E7EB', flexWrap: 'wrap', gap: '1rem' }}>
             <span style={{ fontSize: '1.05rem', color: '#4B5563', fontWeight: 500 }}>
-              <strong style={{ color: 'var(--text-dark)' }}>{filteredProducts.length}</strong> products found
+              <strong style={{ color: 'var(--text-dark)' }}>{sortedProducts.length}</strong> products found
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <label htmlFor="sort" style={{ fontSize: '0.95rem', color: '#4B5563' }}>Sort by:</label>
-              <select id="sort" style={{ padding: '0.5rem 2rem 0.5rem 1rem', border: '1px solid #D1D5DB', borderRadius: '4px', backgroundColor: '#FFF', fontSize: '0.95rem', color: 'var(--text-dark)', cursor: 'pointer', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%236B7280\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1rem' }}>
+              <select id="sort" value={sortOption} onChange={(e) => setSortOption(e.target.value)} style={{ padding: '0.5rem 2rem 0.5rem 1rem', border: '1px solid #D1D5DB', borderRadius: '4px', backgroundColor: '#FFF', fontSize: '0.95rem', color: 'var(--text-dark)', cursor: 'pointer', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%236B7280\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1rem' }}>
                 <option>Newest Arrivals</option>
-                <option>Price: Low to High</option>
-                <option>Price: High to Low</option>
+                <option>Featured</option>
+                <option>Best Selling</option>
+                <option>Popularity</option>
               </select>
             </div>
           </div>
 
       {loading ? (
             <div style={{ padding: '4rem 0', textAlign: 'center', color: 'var(--bg-secondary)', fontWeight: 'bold' }}>Loading Catalogue...</div>
-      ) : filteredProducts.length === 0 ? (
+      ) : sortedProducts.length === 0 ? (
             <div style={{ padding: '4rem 0', textAlign: 'center', color: '#4B5563' }}>
           No products found in this category. Please check back later or contact us for inquiries.
             </div>
       ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '2rem' }}>
-          {filteredProducts.map((product) => (
+          {sortedProducts.map((product) => (
             <ProductCard 
               key={product.id}
               title={product.title}
