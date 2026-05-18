@@ -8,6 +8,7 @@ export default function AdminDashboard() {
   const [productData, setProductData] = useState({
     title: '',
     category: 'tracksuits',
+    color: 'Black',
     moq: '',
     fabric: '',
     features: ''
@@ -16,6 +17,8 @@ export default function AdminDashboard() {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [imageScale, setImageScale] = useState<number>(1);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [products, setProducts] = useState<any[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
   const [leadFormData, setLeadFormData] = useState({
@@ -33,7 +36,17 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchLeads();
     fetchLogs();
+    fetchProducts();
   }, []);
+
+  const fetchProducts = async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) console.error('Error fetching products:', error);
+    else setProducts(data || []);
+  };
 
   const fetchLeads = async () => {
     const { data, error } = await supabase
@@ -163,9 +176,30 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleEditProduct = (prod: any) => {
+    setEditingProductId(prod.id);
+    setProductData({
+      title: prod.title || '',
+      category: prod.category || 'tracksuits',
+      color: prod.color || 'Black',
+      moq: prod.moq || '',
+      fabric: prod.fabric || '',
+      features: prod.features || ''
+    });
+    setImagePreviewUrl(prod.image_url || '');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) alert(`Error deleting product: ${error.message}`);
+    else setProducts((prev) => prev.filter((p) => p.id !== id));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!imageFile) {
+    if (!imageFile && !editingProductId) {
       alert('Please select a product image to upload.');
       return;
     }
@@ -173,47 +207,58 @@ export default function AdminDashboard() {
     setIsUploading(true);
 
     try {
-      // 1. Upload the image to Supabase Storage
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(fileName, imageFile);
+      let imageUrl = imagePreviewUrl;
 
-      if (uploadError) throw uploadError;
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, imageFile);
 
-      // 2. Retrieve the public URL for the uploaded image
-      const { data: publicUrlData } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(fileName);
-      
-      const imageUrl = publicUrlData.publicUrl;
+        if (uploadError) throw uploadError;
 
-      // 3. Insert the product data into the Database
-      const { error: insertError } = await supabase.from('products').insert([{
+        const { data: publicUrlData } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(fileName);
+        
+        imageUrl = publicUrlData.publicUrl;
+      }
+
+      const payload = {
         title: productData.title,
         category: productData.category,
+        color: productData.color,
         moq: productData.moq,
         fabric: productData.fabric,
         features: productData.features,
         image_url: imageUrl
-      }]);
+      };
 
-      if (insertError) throw insertError;
+      if (editingProductId) {
+        const { error: updateError } = await supabase.from('products').update(payload).eq('id', editingProductId);
+        if (updateError) throw updateError;
+        alert('Product updated successfully!');
+      } else {
+        const { error: insertError } = await supabase.from('products').insert([payload]);
+        if (insertError) throw insertError;
+        alert('Product uploaded successfully!');
+      }
 
-      alert('Product uploaded successfully!');
-      
       // Reset the form
-      setProductData({ title: '', category: 'tracksuits', moq: '', fabric: '', features: '' });
+      setProductData({ title: '', category: 'tracksuits', color: 'Black', moq: '', fabric: '', features: '' });
       setImageFile(null);
       setImagePreviewUrl('');
       setImageScale(1);
+      setEditingProductId(null);
       if (e.target instanceof HTMLFormElement) e.target.reset();
+      
+      fetchProducts(); // Refresh products table
       
     } catch (error: any) {
       console.error("Upload error:", error);
-      alert(`Upload failed: ${error.message}`);
+      alert(`Upload/Update failed: ${error.message}`);
     } finally {
       setIsUploading(false);
     }
@@ -328,24 +373,38 @@ export default function AdminDashboard() {
       )}
 
       {activeTab === 'products' && (
-        <div className="contact-container">
-          <div>
-            <div className="contact-form-card" style={{ marginBottom: '2rem' }}>
-              <h2 style={{ color: 'var(--bg-secondary)', marginTop: 0, marginBottom: '1.5rem' }}>Upload New Product</h2>
+        <div style={{ width: '100%', maxWidth: '1200px' }}>
+          <div className="contact-container">
+            <div>
+              <div className="contact-form-card" style={{ marginBottom: '2rem', borderTop: editingProductId ? '4px solid #1E3A8A' : 'none' }}>
+                <h2 style={{ color: editingProductId ? '#1E3A8A' : 'var(--bg-secondary)', marginTop: 0, marginBottom: '1.5rem' }}>
+                  {editingProductId ? 'Edit Product' : 'Upload New Product'}
+                </h2>
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label className="form-label" htmlFor="title">Product Title</label>
                   <input type="text" id="title" className="form-control" placeholder="e.g., Premium Sublimated Tracksuit" required value={productData.title} onChange={handleChange} />
                 </div>
                 
-                <div className="form-group">
-                  <label className="form-label" htmlFor="category">Category</label>
-                  <select id="category" className="form-control" required value={productData.category} onChange={handleChange}>
-                    <option value="tracksuits">Tracksuits</option>
-                    <option value="school-vests">School Vests</option>
-                    <option value="montessori">Montessori</option>
-                    <option value="advertising-tshirts">Advertising T-Shirts</option>
-                  </select>
+                <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <label className="form-label" htmlFor="category">Category</label>
+                    <select id="category" className="form-control" required value={productData.category} onChange={handleChange}>
+                      <option value="tracksuits">Tracksuits</option>
+                      <option value="school-vests">School Vests</option>
+                      <option value="montessori">Montessori</option>
+                      <option value="advertising-tshirts">Advertising T-Shirts</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label" htmlFor="color">Product Color</label>
+                    <select id="color" className="form-control" required value={productData.color} onChange={handleChange}>
+                      <option value="Black">Black</option>
+                      <option value="Blue">Blue</option>
+                      <option value="Red">Red</option>
+                      <option value="Navy">Navy</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -366,7 +425,7 @@ export default function AdminDashboard() {
 
                 <div className="form-group">
                   <label className="form-label" htmlFor="image">Product Image</label>
-                  <input type="file" id="image" accept="image/*" className="form-control" required onChange={handleImageChange} style={{ padding: '0.5rem' }} />
+                  <input type="file" id="image" accept="image/*" className="form-control" required={!editingProductId} onChange={handleImageChange} style={{ padding: '0.5rem' }} />
                 </div>
 
                 <div className="form-group">
@@ -374,27 +433,81 @@ export default function AdminDashboard() {
                   <input type="range" id="zoom" min="0.5" max="2.5" step="0.1" value={imageScale} onChange={(e) => setImageScale(Number(e.target.value))} style={{ width: '100%', cursor: 'pointer' }} />
                 </div>
 
-                <button type="submit" className="btn-primary btn-block" disabled={isUploading}>
-                  {isUploading ? 'Uploading...' : 'Publish Product'}
+                <button type="submit" className="btn-primary btn-block" disabled={isUploading} style={editingProductId ? { backgroundColor: '#1E3A8A', color: '#FFF', border: '2px solid #1E3A8A' } : {}}>
+                  {isUploading ? (editingProductId ? 'Updating...' : 'Uploading...') : (editingProductId ? 'Update Product Information' : 'Publish Product')}
                 </button>
+                {editingProductId && (
+                  <button type="button" onClick={() => { setEditingProductId(null); setProductData({ title: '', category: 'tracksuits', color: 'Black', moq: '', fabric: '', features: '' }); setImagePreviewUrl(''); }} className="btn-secondary btn-block" style={{ marginTop: '1rem' }}>
+                    Cancel Edit
+                  </button>
+                )}
               </form>
             </div>
           </div>
 
-          <div style={{ position: 'relative' }}>
-            <div style={{ position: 'sticky', top: '100px' }}>
-              <h3 style={{ margin: '0 0 1rem 0', color: 'var(--bg-secondary)', textAlign: 'center' }}>
-                Live Card Preview
-              </h3>
-              <ProductCard 
-                title={productData.title || 'Product Title'}
-                moq={productData.moq || 'e.g., 500 Sets'}
-                fabric={productData.fabric || 'e.g., 100% Polyester'}
-                features={productData.features || 'e.g., Breathable, Custom Prints'}
-                imageUrl={imagePreviewUrl}
-                imagePlaceholder="[ Image Preview ]"
-                imageScale={imageScale}
-              />
+            <div style={{ position: 'relative' }}>
+              <div style={{ position: 'sticky', top: '100px' }}>
+                <h3 style={{ margin: '0 0 1rem 0', color: 'var(--bg-secondary)', textAlign: 'center' }}>
+                  Live Card Preview
+                </h3>
+                <ProductCard 
+                  title={productData.title || 'Product Title'}
+                  moq={productData.moq || 'e.g., 500 Sets'}
+                  fabric={productData.fabric || 'e.g., 100% Polyester'}
+                  features={productData.features || 'e.g., Breathable, Custom Prints'}
+                  imageUrl={imagePreviewUrl}
+                  imagePlaceholder="[ Image Preview ]"
+                  imageScale={imageScale}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* All Products List */}
+          <div style={{ marginTop: '4rem' }}>
+            <h2 style={{ color: 'var(--bg-secondary)', marginBottom: '1.5rem', borderBottom: '2px solid var(--bg-secondary)', paddingBottom: '0.75rem' }}>
+              All Products
+            </h2>
+            <div style={{ overflowX: 'auto', backgroundColor: '#FFFFFF', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.05)', borderTop: '4px solid var(--bg-secondary)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--bg-secondary)', borderBottom: '2px solid rgba(30, 58, 138, 0.1)' }}>
+                    <th style={{ padding: '1.25rem 1rem' }}>Image</th>
+                    <th style={{ padding: '1.25rem 1rem' }}>Title</th>
+                    <th style={{ padding: '1.25rem 1rem' }}>Category</th>
+                    <th style={{ padding: '1.25rem 1rem' }}>Color</th>
+                    <th style={{ padding: '1.25rem 1rem' }}>MOQ</th>
+                    <th style={{ padding: '1.25rem 1rem', textAlign: 'center' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.length > 0 ? products.map((prod) => (
+                    <tr key={prod.id} style={{ borderBottom: '1px solid rgba(30, 58, 138, 0.1)' }}>
+                      <td style={{ padding: '1rem' }}>
+                        {prod.image_url ? (
+                          <img src={prod.image_url} alt={prod.title} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
+                        ) : (
+                          <div style={{ width: '50px', height: '50px', backgroundColor: '#E5E7EB', borderRadius: '4px' }}></div>
+                        )}
+                      </td>
+                      <td style={{ padding: '1rem', fontWeight: 600 }}>{prod.title}</td>
+                      <td style={{ padding: '1rem', textTransform: 'capitalize' }}>{prod.category}</td>
+                      <td style={{ padding: '1rem' }}>{prod.color || '—'}</td>
+                      <td style={{ padding: '1rem' }}>{prod.moq}</td>
+                      <td style={{ padding: '1rem', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                        <button onClick={() => handleEditProduct(prod)} style={{ background: 'transparent', border: 'none', color: 'var(--bg-secondary)', cursor: 'pointer', fontSize: '1.1rem', marginRight: '0.75rem' }} aria-label="Edit Product">✏️</button>
+                        <button onClick={() => handleDeleteProduct(prod.id)} style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', fontSize: '1.25rem', fontWeight: 'bold' }} aria-label="Delete Product">×</button>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>
+                        No products found. Add your first product above.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

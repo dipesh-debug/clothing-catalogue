@@ -1,6 +1,17 @@
 import Image from 'next/image';
+import React from 'react';
 
-export default function ProductCard({ title, imagePlaceholder, imageUrl, moq, fabric, features, imageScale = 1 }) {
+interface ProductCardProps {
+  title?: string;
+  imagePlaceholder?: React.ReactNode;
+  imageUrl?: string;
+  moq?: string | number;
+  fabric?: string;
+  features?: string;
+  imageScale?: number;
+}
+
+export default function ProductCard({ title, imagePlaceholder, imageUrl, moq, fabric, features, imageScale = 1 }: ProductCardProps) {
   // Setup dynamic B2B WhatsApp link
   const whatsappNumber = "9779800000000";
   const whatsappMessage = encodeURIComponent(`Hello, I am interested in a bulk order for ${title || 'your product'}. Can you provide pricing and fabric availability?`);

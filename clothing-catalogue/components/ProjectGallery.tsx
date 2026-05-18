@@ -1,24 +1,47 @@
 "use client";
 
-import { useState } from 'react';
-
-const projectData = [
-  { id: 1, title: 'Everest Academy Tracksuits', category: 'Tracksuits', image: 'https://placehold.co/600x450/e2e8f0/1e3a8a?text=Tracksuits' },
-  { id: 2, title: 'Lions Club Jerseys', category: 'Jerseys', image: 'https://placehold.co/600x450/e2e8f0/1e3a8a?text=Jerseys' },
-  { id: 3, title: 'Montessori Summer Uniforms', category: 'School Uniforms', image: 'https://placehold.co/600x450/e2e8f0/1e3a8a?text=School+Uniforms' },
-  { id: 4, title: 'National Team Warmups', category: 'Tracksuits', image: 'https://placehold.co/600x450/e2e8f0/1e3a8a?text=Tracksuits' },
-  { id: 5, title: 'City High Winter Vests', category: 'School Uniforms', image: 'https://placehold.co/600x450/e2e8f0/1e3a8a?text=School+Uniforms' },
-  { id: 6, title: 'Regional Tournament Kits', category: 'Jerseys', image: 'https://placehold.co/600x450/e2e8f0/1e3a8a?text=Jerseys' },
-];
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import ProductCard from './ProductCard';
+import { supabase } from '@/lib/supabase';
 
 const categories = ['All', 'Jerseys', 'Tracksuits', 'School Uniforms'];
 
 export default function ProjectGallery() {
   const [activeCategory, setActiveCategory] = useState('All');
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      // Fetch preview limit of 6 items for the homepage
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(6);
+        
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+          setProducts([]);
+          return;
+        }
+        setProducts(data);
+      } catch (error) {
+        console.error('Supabase Fetch Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const filteredProjects = activeCategory === 'All' 
-    ? projectData 
-    : projectData.filter(project => project.category === activeCategory);
+    ? products 
+    : products.filter(project => project.category === activeCategory);
 
   return (
     <div>
@@ -36,16 +59,51 @@ export default function ProjectGallery() {
       </div>
 
       {/* Image Grid */}
-      <div className="product-grid" style={{ marginTop: 0 }}>
-        {filteredProjects.map((project) => (
-          <div key={project.id} className="gallery-item">
-            <img src={project.image} alt={project.title} className="gallery-img" />
-            <div className="gallery-overlay">
-              <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.15rem' }}>{project.title}</h3>
-              <p style={{ margin: 0, fontSize: '0.9rem', color: '#93C5FD' }}>{project.category}</p>
-            </div>
-          </div>
-        ))}
+      {loading ? (
+        <div style={{ padding: '4rem 0', textAlign: 'center', color: 'var(--bg-secondary)', fontWeight: 'bold' }}>Loading Products...</div>
+      ) : filteredProjects.length === 0 ? (
+        <div style={{ padding: '4rem 0', textAlign: 'center', color: '#4B5563' }}>
+          No products found in this category.
+        </div>
+      ) : (
+        <div className="product-grid" style={{ marginTop: 0 }}>
+          {filteredProjects.map((project) => (
+            <ProductCard 
+              key={project.id}
+              title={project.title}
+              imageUrl={project.image_url}
+              moq={project.moq}
+              fabric={project.fabric}
+              features={project.features}
+              imagePlaceholder="[ Image Not Found ]"
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Explore More Button */}
+      <div style={{ marginTop: '4rem', textAlign: 'center' }}>
+        <style>{`
+          .btn-explore {
+            display: inline-block;
+            background-color: #FFFFFF;
+            border: 2px solid #1E3A8A;
+            color: #1E3A8A;
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 1rem 3rem;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+          }
+          .btn-explore:hover {
+            background-color: #1E3A8A;
+            color: #FFFFFF;
+          }
+        `}</style>
+        <Link href="/catalogue" className="btn-explore">
+          Explore Full Catalogue &rarr;
+        </Link>
       </div>
     </div>
   );

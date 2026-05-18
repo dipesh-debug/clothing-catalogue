@@ -17,7 +17,6 @@ export default function CataloguePage() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-  const [sizeOpen, setSizeOpen] = useState(true);
   const [colorOpen, setColorOpen] = useState(true);
 
   useEffect(() => {
@@ -57,24 +56,6 @@ export default function CataloguePage() {
             </label>
           ))}
         </div>
-      </div>
-
-      {/* Size Accordion */}
-      <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '1.5rem' }}>
-        <div onClick={() => setSizeOpen(!sizeOpen)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-dark)', margin: 0 }}>Size</h3>
-          <span style={{ fontSize: '1.25rem', fontWeight: 300, color: '#6B7280' }}>{sizeOpen ? '−' : '+'}</span>
-        </div>
-        {sizeOpen && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-            {['S', 'M', 'L', 'XL', 'XXL'].map(size => (
-              <label key={size} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <input type="checkbox" style={{ accentColor: 'var(--accent-color)' }} />
-                <span style={{ fontSize: '0.95rem', color: '#4B5563' }}>{size}</span>
-              </label>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Color Accordion */}
